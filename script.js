@@ -6,37 +6,42 @@ let shopTimerReg = 30, shopTimerBM = 180, spawnTimer = 0;
 let isGoldenHour = false, isBlackFriday = false, postBlackFriday = false;
 let staff = { sec: null, waiterCount: 0, chef: null, valet: null };
 let currentShopTab = 'reg';
-
-// BIẾN CỜ CHẶN LỖI LƯU CHỒNG KHI RESET
 let isResetting = false; 
 
-const SAVE_KEY = 'GachaChef_Final_V8_Stable';
+// ĐỔI KEY ĐỂ ÉP XÓA SẠCH DỮ LIỆU CŨ BỊ LỖI
+const SAVE_KEY = 'GachaChef_Final_V9_Clean';
 
 function save() {
-    if (isResetting) return; // NẾU ĐANG RESET THÌ KHÔNG LƯU ĐỂ TRÁNH LỖI BÓNG MA
+    if (isResetting) return; 
     localStorage.setItem(SAVE_KEY, JSON.stringify({ money, inv: inventory, maxInv, shopReg, shopBM, cust: customers, level, exp, rating, isNight, timer, missions, isBlackFriday, postBlackFriday, shopTimerReg, shopTimerBM, staff }));
 }
 
 function load() {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (d) {
-        money = d.money; inventory = d.inv || []; maxInv = d.maxInv || 10; 
+        // Bọc Number() để chống lỗi kẹt chuỗi String khiến level không lên được
+        money = Number(d.money) || 500; 
+        level = Number(d.level) || 1; 
+        exp = Number(d.exp) || 0; 
+        rating = Number(d.rating) || 5.0;
+        
+        inventory = d.inv || []; maxInv = Number(d.maxInv) || 10; 
         shopReg = d.shopReg || []; shopBM = d.shopBM || [];
-        customers = d.cust || []; level = d.level || 1; exp = d.exp || 0; rating = parseFloat(d.rating) || 5.0;
-        isNight = d.isNight || false; timer = d.timer || 180; missions = d.missions || [];
+        customers = d.cust || []; 
+        isNight = d.isNight || false; timer = Number(d.timer) || 180; 
+        missions = d.missions || [];
         isBlackFriday = d.isBlackFriday || false; postBlackFriday = d.postBlackFriday || false;
-        shopTimerReg = d.shopTimerReg || 30; shopTimerBM = d.shopTimerBM || 180;
+        shopTimerReg = Number(d.shopTimerReg) || 30; shopTimerBM = Number(d.shopTimerBM) || 180;
         staff = d.staff || { sec: null, waiterCount: 0, chef: null, valet: null };
     }
 }
 
-// 🔥 HÀM RESET BẤT TỬ 🔥
 window.resetGameData = function() {
     if (confirm("🚨 CẢNH BÁO 🚨\nBạn có chắc chắn muốn XÓA SẠCH toàn bộ tiến trình chơi?")) {
-        isResetting = true; // Bật cờ chặn hàm save()
-        localStorage.clear(); // Xóa sạch mọi thứ
+        isResetting = true; 
+        localStorage.clear(); 
         sessionStorage.clear();
-        window.location.reload(); // Ép F5
+        window.location.reload(); 
     }
 };
 
@@ -70,7 +75,7 @@ function generateMissions() {
 
 // --- VÒNG LẶP THỜI GIAN ---
 setInterval(() => {
-    if (isPaused || isResetting) return; // Nếu đang reset thì dừng chạy logic
+    if (isPaused || isResetting) return; 
     
     timer--;
     document.getElementById('timer-bar').style.width = (timer / 180 * 100) + "%";
@@ -88,7 +93,13 @@ setInterval(() => {
     if (timer <= 0) {
         if (isNight) {
             handleNightThieves(); 
-            generateMissions();
+            generateMissions(); // Reset nhiệm vụ ngầm ở đây
+            
+            // Hiện bảng thông báo khi trời sáng để biết nhiệm vụ đã Reset
+            let morningMsg = "🌅 Trời đã sáng! Nhiệm vụ hàng ngày đã được làm mới!\n";
+            if(window.lastThiefMsg) { morningMsg += window.lastThiefMsg; window.lastThiefMsg = ""; }
+            alert(morningMsg);
+            
             if(isBlackFriday) { isBlackFriday = false; postBlackFriday = true; }
             else if(postBlackFriday) { postBlackFriday = false; }
             isBlackFriday = (!postBlackFriday && Math.random() < 0.05);
@@ -119,21 +130,27 @@ function handleNightThieves() {
         stolenNames.push(inventory[targetIdx].name);
         if (inventory[targetIdx].qty <= 0) inventory.splice(targetIdx, 1);
     }
-    let msg = "";
-    if (blockedCount > 0) msg += `🛡 Vệ sĩ đã tóm được ${blockedCount} tên trộm!\n`;
-    if (stolenNames.length > 0) msg += `‼️ Trộm đã lẻn vào kho lấy mất: ${stolenNames.join(', ')}`;
-    if (msg !== "") alert(msg);
+    
+    // Lưu tạm tin nhắn để gộp vào thông báo buổi sáng
+    window.lastThiefMsg = "";
+    if (blockedCount > 0) window.lastThiefMsg += `🛡 Vệ sĩ đã tóm được ${blockedCount} tên trộm!\n`;
+    if (stolenNames.length > 0) window.lastThiefMsg += `‼️ Trộm đã lẻn vào kho lấy mất: ${stolenNames.join(', ')}`;
 }
 
 function updateUI() {
-    if (isResetting) return; // Nếu đang Reset thì bỏ qua bước vẽ UI
+    if (isResetting) return; 
 
     document.getElementById('money').innerText = money;
-    document.getElementById('rating').innerText = rating;
+    document.getElementById('rating').innerText = rating.toFixed(1);
     document.getElementById('lvl').innerText = level;
+    
+    // HIỂN THỊ RÕ CHỈ SỐ EXP TRÊN THANH LEVEL
+    let expNeeded = level * 100;
+    document.getElementById('exp-text').innerText = `${exp}/${expNeeded}`;
+    document.getElementById('exp-fill').style.width = (exp / expNeeded * 100) + "%";
+
     document.getElementById('inv').innerText = inventory.length;
     document.getElementById('max').innerText = maxInv;
-    document.getElementById('exp-fill').style.width = (exp / (level * 100) * 100) + "%";
     
     document.getElementById('shop-timer-reg').innerText = shopTimerReg;
     document.getElementById('shop-timer-bm').innerText = shopTimerBM;
@@ -200,11 +217,17 @@ window.serve = function(i) {
         let finalPrice = Math.floor(basePrice * ((Math.random() * 0.2) + 0.9) * (rating/5) * chefMult);
         if (c.tier >= 2 && Math.random() < 0.3) finalPrice += Math.floor(finalPrice * 0.2);
         
-        money += finalPrice; exp += r.exp;
-        if (c.pat > c.maxPat * 0.6) rating = Math.min(10, (parseFloat(rating) + 0.2)).toFixed(1);
+        money += finalPrice; 
+        exp += Number(r.exp); // Ép kiểu an toàn
+        if (c.pat > c.maxPat * 0.6) rating = Math.min(10, (rating + 0.2));
 
         updateMissions('serve', 1); if(r.tier >= 2) updateMissions('tier2', 1);
-        while (exp >= level * 100) { exp -= level * 100; level++; }
+        
+        // Logic lên cấp đã được bảo vệ tuyệt đối
+        while (exp >= level * 100) { 
+            exp -= level * 100; 
+            level++; 
+        }
         
         customers.splice(i, 1); 
         updateUI();
@@ -215,7 +238,7 @@ window.serve = function(i) {
     }
 }
 
-window.skipCustomer = function(i) { rating = Math.max(1, (rating - 0.5)).toFixed(1); customers.splice(i, 1); updateUI(); }
+window.skipCustomer = function(i) { rating = Math.max(1, (rating - 0.5)); customers.splice(i, 1); updateUI(); }
 window.resetCustomers = function() { if (money < 10) return; money -= 10; customers = []; for(let i=0; i<3; i++) spawnCustomer(); updateUI(); }
 
 window.refreshRegShop = function(paid) {
@@ -274,7 +297,6 @@ window.hireStaff = function(type, id) {
     updateUI();
 }
 
-// --- RENDER GIAO DIỆN ---
 function renderCustomers() {
     const list = document.getElementById('customer-list');
     list.innerHTML = customers.map((c, i) => {
@@ -356,6 +378,21 @@ function renderRecipeBook() {
 function renderMissionsUI() {
     document.getElementById('mission-list').innerHTML = missions.map(m => `
         <div class="card ${m.done ? 'night-badge' : ''}"><p>🎯 ${m.text} (${m.cur}/${m.goal})</p><b class="text-highlight">${m.done ? 'ĐÃ NHẬN' : (m.rewardType === 'money' ? m.rewardVal + '$' : '🎁 Vật phẩm')}</b></div>`).join('');
+}
+
+function updateMissions(type, val) {
+    missions.forEach(m => {
+        if (!m.done) {
+            // Ép kiểu val và m.cur để cộng chuẩn xác
+            if (type === 'serve' && m.id === 1) m.cur = Number(m.cur) + Number(val);
+            if (type === 'tier2' && m.id === 2) m.cur = Number(m.cur) + Number(val);
+            if (m.cur >= m.goal) { 
+                m.done = true; 
+                if(m.rewardType === 'money') money += m.rewardVal; 
+                else { let rIng = INGREDIENTS.find(ig => ig.id === m.rewardVal); inventory.push({id: rIng.id, name: rIng.name, icon: rIng.icon, price: rIng.price, color: rIng.color, qty: 1, uid: "item_" + Date.now()}); }
+            }
+        }
+    });
 }
 
 load(); if (missions.length === 0) generateMissions();

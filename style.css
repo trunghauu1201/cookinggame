@@ -40,7 +40,7 @@ body { background: #0a0a0f; display: flex; justify-content: center; color: var(-
 /* Dashboard */
 .dashboard { padding: 0 16px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .level-section { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
-.lvl-text { font-weight: bold; color: var(--gold); }
+.lvl-text { font-weight: bold; color: var(--gold); font-size: 0.95rem; white-space: nowrap; }
 .stats-row { display: flex; gap: 8px; }
 .stat-box { flex: 1; background: var(--bg-card); padding: 10px; border-radius: var(--radius); text-align: center; font-weight: bold; font-size: 0.9rem; }
 
