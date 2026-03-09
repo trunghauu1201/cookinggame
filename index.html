@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gacha Chef: The Ultimate Era</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-app">
+        <div class="top-bar">
+            <div id="world-banner" class="badge day-badge">🌞 BAN NGÀY</div>
+            <button class="btn-pause" onclick="togglePause()">⏸</button>
+        </div>
+        
+        <div id="event-notice" class="event-alert" style="display:none;"></div>
+        <div class="timer-track"><div id="timer-bar" class="timer-fill"></div></div>
+
+        <header class="dashboard">
+            <div class="level-section">
+                <span class="lvl-text">Lv.<b id="lvl">1</b></span>
+                <div class="exp-track"><div id="exp-fill" class="exp-fill"></div></div>
+            </div>
+            <div class="stats-row">
+                <div class="stat-box">⭐ <span id="rating">5.0</span></div>
+                <div class="stat-box text-gold">💰 <span id="money">500</span>$</div>
+                <div class="stat-box">📦 <span id="inv">0</span>/<span id="max">10</span></div>
+            </div>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="showScreen('restaurant', this)">Nhà Hàng</button>
+            <button class="tab-btn" onclick="showScreen('shop', this)">Cửa Hàng</button>
+            <button class="tab-btn" onclick="showScreen('inventory', this)">Kho Đồ</button>
+            <button class="tab-btn" onclick="showScreen('staff', this)">Nhân Sự</button>
+            <button class="tab-btn" onclick="showScreen('missions', this)">Nhiệm Vụ</button>
+            <button class="tab-btn" onclick="showScreen('recipes', this)">Sổ Tay</button>
+            <button class="tab-btn btn-settings" onclick="showScreen('settings', this)">⚙️ Cài Đặt</button>
+        </nav>
+
+        <main class="content-area">
+            <div id="restaurant" class="screen active-screen">
+                <div class="flex-between mb-3">
+                    <h3 class="screen-title mb-0">Khách: <span id="cust-count" class="text-highlight">0/3</span></h3>
+                    <button class="btn btn-sm" style="background:#374151; color:white;" onclick="resetCustomers()">🔄 Đổi khách (-10$)</button>
+                </div>
+                <div id="customer-list" class="v-stack"></div>
+            </div>
+            
+            <div id="shop" class="screen">
+                <div class="shop-tabs mb-3">
+                    <button id="tab-reg" class="shop-tab-btn active" onclick="switchShopTab('reg')">Chợ Thường</button>
+                    <button id="tab-bm" class="shop-tab-btn" onclick="switchShopTab('bm')">Chợ Đen</button>
+                </div>
+
+                <div id="panel-reg" class="shop-panel">
+                    <div class="flex-between mb-3">
+                        <span class="text-muted">Làm mới sau: <b id="shop-timer-reg" class="text-highlight">30</b>s</span>
+                        <button class="btn btn-sm btn-refresh" onclick="refreshRegShop(true)">🔄 (-10$)</button>
+                    </div>
+                    <div id="shop-list-reg" class="grid-auto"></div>
+                </div>
+
+                <div id="panel-bm" class="shop-panel" style="display:none;">
+                    <div class="flex-between mb-3">
+                        <span style="color:#c084fc;">Làm mới sau: <b id="shop-timer-bm" class="text-highlight">180</b>s</span>
+                        <button class="btn btn-sm" style="background:#7e22ce; color:white;" onclick="refreshBMShop(true)">🔄 (-30$)</button>
+                    </div>
+                    <div id="shop-list-bm" class="grid-auto"></div>
+                </div>
+            </div>
+
+            <div id="inventory" class="screen">
+                <div class="flex-between card mb-3">
+                    <span>Mở rộng kho (+1 ô)</span>
+                    <button class="btn btn-sm btn-gold" onclick="upgradeInventory()">Mất 300$</button>
+                </div>
+                <div id="inventory-list" class="tag-container"></div>
+            </div>
+
+            <div id="staff" class="screen">
+                <div id="staff-list" class="v-stack"></div>
+            </div>
+
+            <div id="missions" class="screen">
+                <div id="mission-list" class="v-stack"></div>
+            </div>
+
+            <div id="recipes" class="screen">
+                <div id="recipe-list" class="v-stack"></div>
+            </div>
+
+            <div id="settings" class="screen">
+                <div class="card text-center">
+                    <h3 class="mb-3">Xóa Toàn Bộ Dữ Liệu</h3>
+                    <p class="text-muted mb-3">Thao tác này sẽ xóa sạch tiền, cấp độ và kho đồ của bạn.</p>
+                    <button class="btn btn-full btn-danger" onclick="window.resetGameData()">🚨 XÓA NGAY VÀ LUÔN</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="pause-overlay" class="overlay">
+        <h2>ĐÃ TẠM DỪNG</h2>
+        <button class="btn btn-large btn-primary mt-4" onclick="togglePause()">▶ TIẾP TỤC</button>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
