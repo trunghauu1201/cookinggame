@@ -8,8 +8,8 @@ let staff = { sec: null, waiterCount: 0, chef: null, valet: null };
 let currentShopTab = 'reg';
 let isResetting = false; 
 
-// ĐỔI KEY ĐỂ ÉP XÓA SẠCH DỮ LIỆU CŨ BỊ LỖI
-const SAVE_KEY = 'GachaChef_Final_V9_Clean';
+// ĐỔI KEY ĐỂ ĐẢM BẢO FIX SẠCH LỖI
+const SAVE_KEY = 'GachaChef_Final_V10_Patch';
 
 function save() {
     if (isResetting) return; 
@@ -19,7 +19,6 @@ function save() {
 function load() {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (d) {
-        // Bọc Number() để chống lỗi kẹt chuỗi String khiến level không lên được
         money = Number(d.money) || 500; 
         level = Number(d.level) || 1; 
         exp = Number(d.exp) || 0; 
@@ -73,7 +72,7 @@ function generateMissions() {
     ];
 }
 
-// --- VÒNG LẶP THỜI GIAN ---
+// --- VÒNG LẶP THỜI GIAN ĐÃ FIX LỖI CRASH ---
 setInterval(() => {
     if (isPaused || isResetting) return; 
     
@@ -93,9 +92,8 @@ setInterval(() => {
     if (timer <= 0) {
         if (isNight) {
             handleNightThieves(); 
-            generateMissions(); // Reset nhiệm vụ ngầm ở đây
+            generateMissions();
             
-            // Hiện bảng thông báo khi trời sáng để biết nhiệm vụ đã Reset
             let morningMsg = "🌅 Trời đã sáng! Nhiệm vụ hàng ngày đã được làm mới!\n";
             if(window.lastThiefMsg) { morningMsg += window.lastThiefMsg; window.lastThiefMsg = ""; }
             alert(morningMsg);
@@ -108,10 +106,16 @@ setInterval(() => {
         isGoldenHour = Math.random() < 0.05;
     }
 
-    customers.forEach((c, i) => {
-        c.pat--;
-        if (c.pat <= 0) { rating = Math.max(1, (rating - 0.4)).toFixed(1); customers.splice(i, 1); }
-    });
+    // VÒNG LẶP NGƯỢC (REVERSE LOOP): Tránh lỗi xô lệch mảng khi xóa phần tử
+    for (let i = customers.length - 1; i >= 0; i--) {
+        customers[i].pat--;
+        if (customers[i].pat <= 0) { 
+            // KHÔNG dùng toFixed() ở đây để tránh biến rating thành dạng chữ (String)
+            rating = Math.max(1, (rating - 0.4)); 
+            customers.splice(i, 1); 
+        }
+    }
+    
     updateUI();
 }, 1000);
 
@@ -131,7 +135,6 @@ function handleNightThieves() {
         if (inventory[targetIdx].qty <= 0) inventory.splice(targetIdx, 1);
     }
     
-    // Lưu tạm tin nhắn để gộp vào thông báo buổi sáng
     window.lastThiefMsg = "";
     if (blockedCount > 0) window.lastThiefMsg += `🛡 Vệ sĩ đã tóm được ${blockedCount} tên trộm!\n`;
     if (stolenNames.length > 0) window.lastThiefMsg += `‼️ Trộm đã lẻn vào kho lấy mất: ${stolenNames.join(', ')}`;
@@ -141,10 +144,10 @@ function updateUI() {
     if (isResetting) return; 
 
     document.getElementById('money').innerText = money;
-    document.getElementById('rating').innerText = rating.toFixed(1);
+    // Ép kiểu an toàn bằng Number() để tránh dính lỗi bóng ma String
+    document.getElementById('rating').innerText = Number(rating).toFixed(1);
     document.getElementById('lvl').innerText = level;
     
-    // HIỂN THỊ RÕ CHỈ SỐ EXP TRÊN THANH LEVEL
     let expNeeded = level * 100;
     document.getElementById('exp-text').innerText = `${exp}/${expNeeded}`;
     document.getElementById('exp-fill').style.width = (exp / expNeeded * 100) + "%";
@@ -218,12 +221,11 @@ window.serve = function(i) {
         if (c.tier >= 2 && Math.random() < 0.3) finalPrice += Math.floor(finalPrice * 0.2);
         
         money += finalPrice; 
-        exp += Number(r.exp); // Ép kiểu an toàn
+        exp += Number(r.exp); 
         if (c.pat > c.maxPat * 0.6) rating = Math.min(10, (rating + 0.2));
 
         updateMissions('serve', 1); if(r.tier >= 2) updateMissions('tier2', 1);
         
-        // Logic lên cấp đã được bảo vệ tuyệt đối
         while (exp >= level * 100) { 
             exp -= level * 100; 
             level++; 
